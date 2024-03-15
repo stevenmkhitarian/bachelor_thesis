@@ -2,7 +2,7 @@ import requests
 import random
 from dotenv import load_dotenv
 import os
-from langchain.chat_models import ChatOpenAI
+from langchain_community.chat_models import ChatOpenAI
 
 load_dotenv()
 
@@ -86,5 +86,5 @@ def main():
         participant_id = f'participant_{i}'
         conduct_experiment(participant_id)
 
- if __name__ == "__main__":
-     main()
+if __name__ == "__main__":
+    main()
