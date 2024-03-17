@@ -6,9 +6,10 @@ from langchain_community.chat_models import ChatOpenAI
 
 load_dotenv()
 
-openai_api_key = os.getenv("OPENAI_API_KEY")
-
-chat_model = ChatOpenAI(openai_api_key)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+QUALTRICS_API_TOKEN = os.getenv("QUALTRICS_API_TOKEN")
+QUALTRICS_SURVEY_ID = os.getenv("QUALTRICS_SURVEY_ID")
+chat_model = ChatOpenAI(OPENAI_API_KEY)
 
 result = chat_model.predict("Hey, how are you?")
 print(result)
@@ -21,9 +22,9 @@ def assign_group():
 
 # Function to send request to OpenAI API for feedback
 def get_ai_feedback(story_text, feedback_amount):
-    openai_api_key = 'YOUR_OPENAI_API_KEY'
+    OPENAI_API_KEY = 'YOUR_OPENAI_API_KEY'
     url = 'https://api.openai.com/v1/engines/davinci-codex/completions'
-    headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {openai_api_key}'}
+    headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {OPENAI_API_KEY}'}
     data = {
         'prompt': story_text,
         'max_tokens': feedback_amount
