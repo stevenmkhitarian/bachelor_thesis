@@ -1,18 +1,40 @@
+from flask import Flask, request, jsonify
 import requests
 import random
 from dotenv import load_dotenv
 import os
-from langchain_community.chat_models import ChatOpenAI
+import langchain
 
 load_dotenv()
-
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-QUALTRICS_API_TOKEN = os.getenv("QUALTRICS_API_TOKEN")
+QUALTRICS_API_KEY = os.getenv("QUALTRICS_API_KEY")
 QUALTRICS_SURVEY_ID = os.getenv("QUALTRICS_SURVEY_ID")
-chat_model = ChatOpenAI(OPENAI_API_KEY)
 
-result = chat_model.predict("Hey, how are you?")
-print(result)
+app = Flask(__name__)
+
+
+# Webhook endpoint to receive Google Forms responses
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    # Verify that the request is a POST request
+    if request.method == 'POST':
+        # Parse the JSON data from the request
+        data = request.json
+
+        # Extract participant response from the webhook payload
+        response = data['response']
+
+        # Process the participant response (e.g., send it to OpenAI API for feedback)
+        feedback = generate_feedback(response)
+
+        # Update the survey with the generated feedback using Google Forms API
+        update_survey(feedback)
+
+        # Return a response to acknowledge receipt of the webhook event
+        return jsonify({'message': 'Webhook received successfully'}), 200
+    else:
+        # Return an error response if the request method is not POST
+        return jsonify({'error': 'Only POST requests are supported'}), 405
 
 # Function to assign participants to different groups
 def assign_group():
@@ -20,8 +42,15 @@ def assign_group():
     groups = ['specific_feedback', 'general_feedback', 'control_group']
     return random.choice(groups)
 
-# Function to send request to OpenAI API for feedback
-def get_ai_feedback(story_text, feedback_amount):
+# Function to update survey using Google Forms API
+def update_survey(feedback):
+    # Code to interact with Google Forms API and update survey goes here
+    # Placeholder for demonstration purposes
+    print(f"Updating survey with feedback: {feedback}")
+
+
+# Function to generate feedback using OpenAI API
+def generate_feedback(story_text, feedback_amount):
     OPENAI_API_KEY = 'YOUR_OPENAI_API_KEY'
     url = 'https://api.openai.com/v1/engines/davinci-codex/completions'
     headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {OPENAI_API_KEY}'}
@@ -46,38 +75,47 @@ def conduct_experiment(participant_id):
     if group == 'specific_feedback':
         story_text = write_story()
         feedback_amount = 300  # Modify this based on your desired feedback amount
-        feedback = get_ai_feedback(story_text, feedback_amount)
+        feedback = generate_feedback(story_text, feedback_amount)
         # Send feedback to participant using Qualtrics API
-        send_feedback_to_participant(participant_id, feedback)
+        update_survey_with_feedback(participant_id, feedback)
     elif group == 'general_feedback':
         story_text = write_story()
         feedback_amount = 100  # Modify this based on your desired feedback amount
-        feedback = get_ai_feedback(story_text, feedback_amount)
+        feedback = generate_feedback(story_text, feedback_amount)
         # Send feedback to participant using Qualtrics API
-        send_feedback_to_participant(participant_id, feedback)
+        update_survey_with_feedback(participant_id, feedback)
     else:  # Control group
         # Participant writes creative story without AI feedback
         story_text = write_story()
         # You can choose to store/control the data for the control group as needed
 
-# Function to send feedback to participant using Qualtrics API
-def send_feedback_to_participant(participant_id, feedback):
-    # Replace 'YOUR_QUALTRICS_API_KEY' and 'YOUR_SURVEY_ID' with your actual API key and survey ID
-    qualtrics_api_key = 'YOUR_QUALTRICS_API_KEY'
-    survey_id = 'YOUR_SURVEY_ID'
-    url = f'https://yourdatacenterid.qualtrics.com/API/v3/surveys/{survey_id}/responses/{participant_id}'
-    headers = {'X-API-Token': qualtrics_api_key}
-    data = {
-        # Modify this based on your survey structure and feedback question
-        'data': {
-            'feedback_question': feedback
-        }
-    }
-    response = requests.put(url, headers=headers, json=data)
-    if response.status_code == 200:
-        print(f'Feedback sent to participant {participant_id}')
-    else:
-        print('Error: Failed to send feedback to participant')
+# # Function to send feedback to participant using Qualtrics API
+# def send_feedback_to_participant(participant_id, feedback):
+#     # Replace 'YOUR_QUALTRICS_API_KEY' and 'YOUR_SURVEY_ID' with your actual API key and survey ID
+#     qualtrics_api_key = 'YOUR_QUALTRICS_API_KEY'
+#     survey_id = 'YOUR_SURVEY_ID'
+#     url = f'https://yourdatacenterid.qualtrics.com/API/v3/surveys/{survey_id}/responses/{participant_id}'
+#     headers = {'X-API-Token': qualtrics_api_key}
+#     data = {
+#         # Modify this based on your survey structure and feedback question
+#         'data': {
+#             'feedback_question': feedback
+#         }
+#     }
+#     response = requests.put(url, headers=headers, json=data)
+#     if response.status_code == 200:
+#         print(f'Feedback sent to participant {participant_id}')
+#     else:
+#         print('Error: Failed to send feedback to participant')
+
+
+# Function to update survey using Google Forms API
+def update_survey_with_feedback(feedback):
+    # Code to interact with Google Forms API and update survey goes here
+    # Placeholder for demonstration purposes
+    print(f"Updating survey with feedback: {feedback}")
+
+
 
 # Main function to simulate participants and conduct the experiment
 def main():
@@ -87,5 +125,8 @@ def main():
         participant_id = f'participant_{i}'
         conduct_experiment(participant_id)
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
+
+if __name__ == '__main__':
+    app.run(debug=True)
